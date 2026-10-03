@@ -1,0 +1,10 @@
+.DS_Store
+.env
+.env.*
+.storage_key
+.storage_key.*
+*.mp4
+*.m4a
+*.wav
+*.mp3
+*.zip
