@@ -17,6 +17,6 @@ Les sources sont proposées pour documenter les sujets ; ce ne sont pas les sour
 
 ## Collaboration
 
-L’objectif est un complément facultatif permettant aux auditeurs moins au fait de l’actualité de retrouver les références. Toute publication du prototype complet ou diffusion de la copie vidéo doit être validée séparément avec les ayants droit. Les demandes de correction ou de retrait sont bienvenues.
+L’objectif est un complément facultatif permettant aux auditeurs moins au fait de l’actualité de retrouver les références. La publication de la transcription intégrale reste à valider avec l’équipe. Un éventuel lecteur distant utilisera la vidéo YouTube officielle, sans rediffusion du MP4. Les demandes de correction ou de retrait sont bienvenues.
 
 Les droits sur les propos et articles restent ceux de leurs ayants droit. `LICENSE-CODE.md` concerne uniquement le code et la mise en forme originale.
