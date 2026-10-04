@@ -45,6 +45,7 @@ function update(force = false) {
     lastRange = range;
     if (range === 'inside') message('Le texte suit le passage affiché.');
     else if (range === 'gap') message('Pause entre deux répliques de cet extrait.');
+    else if (range === 'before') message('Le lecteur est avant l’extrait. Une publicité YouTube peut retarder le démarrage ; utilisez Relancer l’extrait quand la vidéo est prête.');
     else message('Transcription non affichée dans cette démonstration à cet endroit. Vous pouvez relancer l’extrait.');
   }
 }
