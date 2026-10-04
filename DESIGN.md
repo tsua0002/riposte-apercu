@@ -16,5 +16,13 @@ Direction approuvée : populaire, home-made et chaleureuse, sans simuler un site
 - Statut non officiel visible, consentement YouTube conservé, aucune transcription intégrale publique.
 - Cibles principales d’au moins 44 px, focus visible, lien d’évitement et version imprimable.
 
+## Exploration et transmission
+- Navigation par usages : Comprendre, Explorer les sujets, Essayer le lecteur, Présenter le projet. Section active indiquée par texte et soulignement, pas seulement couleur.
+- Recherche locale normalisée (accents/casse), tous les mots recherchés, filtres par catégorie et comptage contextualisé dans une seule région live. Aucun compte, stockage persistant ou requête de recherche externe.
+- Vue par catégorie par défaut ; ordre chronologique facultatif, sans duplication des entrées ni des IDs. Les catégories restent lisibles dans cette vue.
+- Liens profonds stables : une entrée partagée est révélée même après filtrage. Copie du lien avec retour explicite, lien natif de secours, correction par mail prérempli.
+- Présentation honnête du prototype, étapes à tester et limites ; impression ciblée en PDF depuis le navigateur. Aucun bénéfice chiffré inventé.
+- Sans JavaScript : toutes les références et les liens restent lisibles, seules les commandes d’exploration améliorées sont masquées.
+
 ## Construction
 Modifier scripts/build_preview.py, assets/style.css et les modules, puis régénérer index.html. Ne jamais copier l’archive privée dans ce dépôt. La police et le grain sont des ressources publiques locales, sans dépendance runtime supplémentaire.

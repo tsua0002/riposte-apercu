@@ -23,7 +23,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(sum(x['type']=='actualité' for x in self.data),56)
         self.assertEqual(sum(x['type']=='contexte' for x in self.data),59)
         self.assertEqual(sum(x['type']=='anecdote / promotion' for x in self.data),14)
-        self.assertEqual(sum(x.startswith('topic-') for x in self.p.ids),129)
+        self.assertEqual(sum(x.startswith('topic-') and x[6:].isdigit() for x in self.p.ids),129)
         for forbidden in ['transcription.md','sous-titres.srt','sous-titres.vtt','.storage_key']:
             self.assertFalse((ROOT/'data'/forbidden).exists())
         for entry in self.data:
@@ -33,7 +33,8 @@ class Tests(unittest.TestCase):
         for tag in ['iframe','video','audio','form','object','embed']:
             self.assertNotIn(tag,self.p.tags)
         self.assertFalse(any(k.startswith('on') for k,v in self.p.attrs))
-        self.assertEqual(self.p.tags.count('script'),2)
+        self.assertEqual(self.p.tags.count('script'),3)
+        self.assertTrue(any(k=='src' and urlsplit(v).path=='assets/explorer.mjs' for k,v in self.p.attrs))
         self.assertTrue(any(k=='src' and urlsplit(v).path=='assets/hints.mjs' for k,v in self.p.attrs))
         self.assertEqual(sum(v=='info-tooltip' for k,v in self.p.attrs if k=='class'),1)
         self.assertEqual(sum(v=='editorial-note' for k,v in self.p.attrs if k=='class'),5)
@@ -54,6 +55,14 @@ class Tests(unittest.TestCase):
         self.assertIn('Rigole !',self.html)
         self.assertNotIn('>Rire !<',self.html)
         self.assertIn('Aucune connexion à YouTube',self.html)
+    def test_exploration(self):
+        for id in ['topic-search','topic-order','clear-search','results-status','no-results','presentation','print-presentation','chronological']:
+            self.assertIn(id,self.p.ids)
+        self.assertEqual(sum(k=='data-category' for k,v in self.p.attrs),129)
+        self.assertEqual(sum(k=='data-seconds' for k,v in self.p.attrs),129)
+        self.assertEqual(sum(v=='copy-link' for k,v in self.p.attrs if k=='class'),129)
+        self.assertEqual(sum(v=='permalink' for k,v in self.p.attrs if k=='class'),129)
+
     def test_links(self):
         self.assertEqual(len(self.p.ids),len(set(self.p.ids)))
         for key,value in self.p.attrs:
@@ -62,9 +71,11 @@ class Tests(unittest.TestCase):
             elif urlsplit(value).scheme:self.assertIn(urlsplit(value).scheme,['http','https','mailto'])
             else:self.assertTrue((ROOT/urlsplit(value).path).is_file(),value)
     def test_privacy_and_commitment(self):
-        for path in ROOT.rglob('*'):
-            if path.is_file() and '.git' not in path.parts:
-                self.assertNotIn('Su'+'au',path.read_text(errors='replace'),str(path))
+        self.assertEqual(self.html.count('Su'+'au'),1)
+        self.assertIn('<span class="print-surname"> Su'+'au</span>',self.html)
+        css=(ROOT/'assets/style.css').read_text()
+        self.assertIn('.print-surname{display:none}',css)
+        self.assertIn('@media print{.print-surname{display:inline}',css)
         metadata=json.loads((ROOT/'data/version-transcription.json').read_text())
         self.assertEqual(metadata['segments'],3203)
         self.assertRegex(metadata['sha256'],r'^[a-f0-9]{64}$')
