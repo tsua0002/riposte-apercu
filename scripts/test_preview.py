@@ -34,7 +34,7 @@ class Tests(unittest.TestCase):
             self.assertNotIn(tag,self.p.tags)
         self.assertFalse(any(k.startswith('on') for k,v in self.p.attrs))
         self.assertEqual(self.p.tags.count('script'),1)
-        self.assertIn(('src','assets/youtube-demo.mjs'),self.p.attrs)
+        self.assertTrue(any(k=='src' and urlsplit(v).path=='assets/youtube-demo.mjs' for k,v in self.p.attrs))
         self.assertIn("default-src 'none'",self.html)
         self.assertIn("frame-src https://www.youtube-nocookie.com",self.html)
         self.assertNotIn("'unsafe-inline'",self.html)
@@ -52,7 +52,7 @@ class Tests(unittest.TestCase):
             if key not in ('href','src'):continue
             if value.startswith('#'):self.assertIn(value[1:],self.p.ids)
             elif urlsplit(value).scheme:self.assertIn(urlsplit(value).scheme,['http','https','mailto'])
-            else:self.assertTrue((ROOT/value).is_file(),value)
+            else:self.assertTrue((ROOT/urlsplit(value).path).is_file(),value)
     def test_privacy_and_commitment(self):
         for path in ROOT.rglob('*'):
             if path.is_file() and '.git' not in path.parts:
