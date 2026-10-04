@@ -8,6 +8,9 @@ export function matchesTopic(topic, query, category = 'all') {
   return (category === 'all' || topic.category === category) &&
     words(query).every(word => contentWords.some(candidate => candidate.startsWith(word)));
 }
+export function showBackToTop(scrollY, viewportHeight) {
+  return scrollY >= Math.max(600, viewportHeight);
+}
 export function chronological(topics) {
   return [...topics].sort((a, b) => a.seconds - b.seconds || a.index - b.index);
 }

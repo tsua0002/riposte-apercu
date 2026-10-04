@@ -1,4 +1,4 @@
-import { matchesTopic, chronological } from './explorer-core.mjs';
+import { matchesTopic, chronological, showBackToTop } from './explorer-core.mjs';
 
 const controls = document.querySelector('.explorer-controls');
 const search = document.querySelector('#topic-search');
@@ -85,11 +85,11 @@ for (const item of items) {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
       await navigator.clipboard.writeText(url.href);
       button.textContent = 'Lien copié';
-      shareStatus.textContent = `Lien copié pour : ${item.node.querySelector('h3').textContent}.`;
+      shareStatus.textContent = `Lien copié : ${item.node.querySelector('h3').textContent}.`;
       setTimeout(() => { button.textContent = 'Copier le lien'; }, 2400);
     } catch {
-      shareStatus.textContent = 'Copie non autorisée : utilisez « Lien du sujet », puis copiez son adresse depuis le navigateur.';
-      button.textContent = 'Utiliser le lien du sujet';
+      shareStatus.textContent = 'Le lien n’a pas pu être copié. Ouvrez le sujet, puis copiez l’adresse dans le navigateur.';
+      button.textContent = 'Copier le lien';
     }
   });
 }
@@ -123,3 +123,17 @@ printButton.addEventListener('click', () => {
   window.print();
 });
 window.addEventListener('afterprint', () => document.body.classList.remove('print-presentation'));
+
+// Quiet, optional navigation: only appear once the visitor has left the top.
+const backToTop = document.querySelector('.back-to-top');
+let scrollFrame = null;
+function updateBackToTop() {
+  backToTop.hidden = !showBackToTop(window.scrollY, window.innerHeight);
+  scrollFrame = null;
+}
+window.addEventListener('scroll', () => {
+  if (scrollFrame === null) scrollFrame = requestAnimationFrame(updateBackToTop);
+}, {passive: true});
+window.addEventListener('resize', updateBackToTop);
+window.addEventListener('pageshow', updateBackToTop);
+updateBackToTop();

@@ -54,7 +54,7 @@ class Tests(unittest.TestCase):
         self.assertTrue(all(42 <= a < b < 52 for a,b in zip(starts,ends)))
         self.assertIn('Rigole !',self.html)
         self.assertNotIn('>Rire !<',self.html)
-        self.assertIn('Aucune connexion à YouTube',self.html)
+        self.assertIn('YouTube n’est contacté qu’après activation',self.html)
     def test_exploration(self):
         for id in ['topic-search','topic-order','clear-search','results-status','no-results','presentation','print-presentation','chronological']:
             self.assertIn(id,self.p.ids)
@@ -62,6 +62,33 @@ class Tests(unittest.TestCase):
         self.assertEqual(sum(k=='data-seconds' for k,v in self.p.attrs),129)
         self.assertEqual(sum(v=='copy-link' for k,v in self.p.attrs if k=='class'),129)
         self.assertEqual(sum(v=='permalink' for k,v in self.p.attrs if k=='class'),129)
+
+    def test_editorial_copy(self):
+        copy=json.loads((ROOT/'data/editorial-copy.json').read_text())
+        review=(ROOT/'data/revue-de-presse.md').read_text()
+        self.assertEqual(len(copy),len(self.data))
+        for number,(expected,item) in enumerate(zip(copy,self.data),1):
+            self.assertEqual(expected['id'],f'topic-{number}')
+            self.assertEqual(expected['seconds'],item['seconds'])
+            for field in ['title','summary','notes']:
+                self.assertEqual(expected[field],item[field])
+                self.assertIn(item[field],review)
+        self.assertNotIn('fetch HTTP',self.html)
+        self.assertNotIn('LLM',self.html)
+        self.assertIn('3\u202f203 segments',self.html)
+        self.assertIn('156\u202f693 octets',self.html)
+        self.assertIn('Les gains de temps et la fiabilité restent à évaluer.',self.html)
+
+    def test_back_to_top(self):
+        class BackLink(HTMLParser):
+            attrs=None
+            def handle_starttag(self,tag,attrs):
+                if tag=='a' and dict(attrs).get('class')=='back-to-top':
+                    self.attrs=dict(attrs)
+        link=BackLink();link.feed(self.html)
+        self.assertEqual(link.attrs['href'],'#top')
+        self.assertIn('hidden',link.attrs)
+        self.assertIn('top',self.p.ids)
 
     def test_links(self):
         self.assertEqual(len(self.p.ids),len(set(self.p.ids)))
