@@ -90,6 +90,15 @@ class Tests(unittest.TestCase):
         self.assertIn('hidden',link.attrs)
         self.assertIn('top',self.p.ids)
 
+    def test_favicon(self):
+        for name in ['favicon.ico','assets/favicon.svg','assets/favicon.png','assets/apple-touch-icon.png']:
+            self.assertTrue((ROOT/name).is_file())
+            self.assertTrue(any(k=='href' and urlsplit(v).path==name for k,v in self.p.attrs))
+        import xml.etree.ElementTree as ET
+        svg=ET.parse(ROOT/'assets/favicon.svg').getroot()
+        self.assertEqual(svg.attrib['viewBox'],'0 0 64 64')
+        self.assertNotIn('script',(ROOT/'assets/favicon.svg').read_text())
+
     def test_links(self):
         self.assertEqual(len(self.p.ids),len(set(self.p.ids)))
         for key,value in self.p.attrs:
