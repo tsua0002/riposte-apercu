@@ -29,15 +29,27 @@ class Tests(unittest.TestCase):
         for entry in self.data:
             self.assertNotIn('quote',entry);self.assertNotIn('mentions',entry)
             for source in entry['sources']:self.assertNotIn('evidence',source)
-    def test_no_active_content(self):
-        for tag in ['script','iframe','video','audio','form','input','object','embed']:
+    def test_controlled_demo(self):
+        for tag in ['iframe','video','audio','form','object','embed']:
             self.assertNotIn(tag,self.p.tags)
         self.assertFalse(any(k.startswith('on') for k,v in self.p.attrs))
+        self.assertEqual(self.p.tags.count('script'),1)
+        self.assertIn(('src','assets/youtube-demo.mjs'),self.p.attrs)
         self.assertIn("default-src 'none'",self.html)
+        self.assertIn("frame-src https://www.youtube-nocookie.com",self.html)
+        self.assertNotIn("'unsafe-inline'",self.html)
+        self.assertNotIn("'unsafe-eval'",self.html)
+        starts=[float(v) for k,v in self.p.attrs if k=='data-start']
+        ends=[float(v) for k,v in self.p.attrs if k=='data-end']
+        self.assertEqual(len(starts),5)
+        self.assertTrue(all(42 <= a < b < 52 for a,b in zip(starts,ends)))
+        self.assertIn('Rigole !',self.html)
+        self.assertNotIn('>Rire !<',self.html)
+        self.assertIn('Aucune connexion à YouTube',self.html)
     def test_links(self):
         self.assertEqual(len(self.p.ids),len(set(self.p.ids)))
         for key,value in self.p.attrs:
-            if key!='href':continue
+            if key not in ('href','src'):continue
             if value.startswith('#'):self.assertIn(value[1:],self.p.ids)
             elif urlsplit(value).scheme:self.assertIn(urlsplit(value).scheme,['http','https','mailto'])
             else:self.assertTrue((ROOT/value).is_file(),value)
