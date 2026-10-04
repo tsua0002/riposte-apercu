@@ -5,6 +5,7 @@ Standard library only; this script does not publish anything or access credentia
 """
 from pathlib import Path
 from html import escape
+from html.parser import HTMLParser
 from urllib.parse import urlsplit
 import argparse, collections, hashlib, json, re
 
@@ -103,9 +104,32 @@ for label, line in re.findall(r'^\*\*\[([^\]]+)\]\*\* (.*)$', md_bytes.decode(),
         end = ends[seconds]
         excerpt.append(f'<p class="cue" data-start="{seconds}" data-end="{end}"><span class="time"><a href="{esc(youtube(seconds))}" target="_blank" rel="noopener noreferrer" aria-label="Lire le passage à {esc(label)}">{esc(label)} ↗</a></span><span>{esc(line)}</span></p>')
 
+class NoteHints(HTMLParser):
+    """Replace every note/muted element, preserving its content and live IDs."""
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.output = []; self.stack = []; self.count = 0
+    def handle_starttag(self, tag, attrs):
+        is_note = tag in ('p', 'span') and bool(set(dict(attrs).get('class', '').split()) & {'note', 'muted'})
+        if is_note:
+            self.count += 1
+            self.output.append(f'<span class="info-hint"><button class="info-button" type="button" aria-label="Informations complémentaires" aria-expanded="false" aria-describedby="info-{self.count}">&#9888;&#65038;</button><span id="info-{self.count}" class="info-tooltip" role="tooltip"><span ' + ' '.join(f'{key}="{esc(value)}"' if value is not None else key for key,value in attrs) + '>')
+        else:
+            self.output.append(self.get_starttag_text())
+        if tag not in ('meta','link','input','br','hr','img','source','track','wbr','area','base','col','embed','param'):
+            self.stack.append((tag,is_note))
+    def handle_endtag(self, tag):
+        original, is_note = self.stack.pop()
+        if original != tag: raise ValueError('Unexpected HTML nesting')
+        self.output.append('</span></span></span>' if is_note else f'</{tag}>')
+    def handle_data(self, data): self.output.append(data)
+    def handle_entityref(self, name): self.output.append('&'+name+';')
+    def handle_charref(self, name): self.output.append('&#'+name+';')
+    def handle_decl(self, decl): self.output.append('<!'+decl+'>')
+
 asset_version = hashlib.sha256(b''.join((ROOT / 'assets' / name).read_bytes()
-    for name in ['style.css', 'youtube-demo.mjs', 'demo-core.mjs'])).hexdigest()[:12]
-page = f'''<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.youtube.com; frame-src https://www.youtube-nocookie.com; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'"><meta name="referrer" content="strict-origin-when-cross-origin"><meta name="description" content="Revue de presse personnelle et aperçu limité d’une proposition d’accompagnement de La Riposte, par un auditeur."><title>La Riposte — revue de presse et aperçu non officiel</title><link rel="stylesheet" href="assets/style.css?v={asset_version}"><script type="module" src="assets/youtube-demo.mjs?v={asset_version}"></script></head><body>
+    for name in ['style.css', 'youtube-demo.mjs', 'demo-core.mjs', 'hints.mjs'])).hexdigest()[:12]
+page = f'''<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.youtube.com; frame-src https://www.youtube-nocookie.com; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'"><meta name="referrer" content="strict-origin-when-cross-origin"><meta name="description" content="Revue de presse personnelle et aperçu limité d’une proposition d’accompagnement de La Riposte, par un auditeur."><title>La Riposte — revue de presse et aperçu non officiel</title><link rel="stylesheet" href="assets/style.css?v={asset_version}"><script type="module" src="assets/youtube-demo.mjs?v={asset_version}"></script><script type="module" src="assets/hints.mjs?v={asset_version}"></script></head><body>
 <header><p class="badge">Projet personnel non officiel · proposition à l’équipe</p><h1>Retrouver les références de La Riposte</h1><p>Revue de presse et aperçu d’une transcription horodatée de l’émission du 28 septembre 2026.</p><p class="note">Thomas · <a href="mailto:thomas@codethelaw.eu">thomas@codethelaw.eu</a>. Aucun partenariat ni validation de Radio Nova ou de l’équipe n’est présumé.</p><p><a class="button" href="https://www.youtube.com/watch?v=kKOcQM1eynE" target="_blank" rel="noopener noreferrer">Regarder la vidéo officielle sur YouTube ↗</a></p></header>
 <nav aria-label="Navigation"><a href="#proposal">La proposition</a><a href="#excerpt">Court extrait</a><a href="#version">Version complète</a><a href="#sources">Revue de presse</a><a href="#contact">Contact et limites</a></nav><main>
 <section id="proposal"><h2>Un complément facultatif</h2><p>J’aime beaucoup La Riposte. La proposition principale est une <strong>revue de presse semi-automatisée</strong> : repérer les sujets évoqués, retrouver des articles associés et les relier aux passages de l’émission. Ce premier essai vise à explorer avec l’équipe ce qui pourrait lui être utile, pas à créer un projet parallèle.</p><ul><li>Une aide au repérage et à l’organisation des références, avec vérification éditoriale nécessaire.</li><li>Une transcription horodatée et des sous-titres proposés en privé comme outils de travail : retrouver des passages et préparer une base de sous-titres à corriger.</li><li>Une courte démonstration synchronisée utilisant uniquement le lecteur YouTube officiel.</li></ul><p class="warning">Cette page ne réhéberge aucune vidéo ni aucun audio et ne distribue aucune transcription intégrale ni sous-titres complets. La transcription intégrale n’est pas destinée à une publication indépendante ici. La revue de presse est une synthèse personnelle non officielle, sans reproduction intégrale des articles.</p></section>
@@ -113,8 +137,11 @@ page = f'''<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name
 <section id="version"><h2>Une transcription complète comme outil de travail pour l’équipe</h2><p>Le fichier révisé couvre l’épisode d’environ 1 h 39 min et comprend {metadata['segments']:,} segments de sous-titres. Il reste en cours de relecture, sans validation intégrale à l’écoute.</p><p>Empreinte SHA-256 du Markdown complet ({metadata['bytes']:,} octets) :</p><p class="note"><code>{metadata['sha256']}</code></p><p class="note">Cette empreinte engage sur une version précise et permettra une comparaison si le fichier est ensuite partagé. Elle ne prouve pas à elle seule la complétude, l’exactitude ou l’existence du fichier. Aucune API publique ne distribue la transcription par morceaux.</p><p><a href="data/version-transcription.json" download>Métadonnées de version (.json)</a></p></section>
 <section id="sources"><h2>Revue de presse et références associées</h2><p>{len(public)} entrées : {counts['actualité']} actualités, {counts['contexte']} références de contexte, {counts['anecdote / promotion']} anecdotes/promotions. {associated} entrées ont des articles associés ; {read} ont au moins un article consulté lors de la recherche initiale.</p><p class="note">Ces sources ne sont pas nécessairement celles de l’équipe. Les synthèses décrivent les sujets évoqués, sans certifier les affirmations de l’émission. Une source de contexte n’établit pas tous les détails du propos. Les correspondances recherche/RSS ne valent pas lecture du texte intégral. L’inventaire ne garantit ni exhaustivité ni attribution exacte.</p><p><a href="data/revue-de-presse.md" download>Revue de presse (.md)</a> · <a href="data/sources.json" download>Inventaire public sans citations détaillées (.json)</a></p></section>{''.join(parts)}
 <section id="contact"><h2>Améliorer ce prototype ensemble</h2><p>La transcription a été produite avec l’aide de Whisper et de LLM, puis partiellement corrigée à l’écoute. Des erreurs et incertitudes subsistent. Il ne s’agit pas d’une transcription officiellement validée ni d’un fact-checking de l’émission.</p><p>Les retours et demandes de correction ou de retrait sont bienvenus. Les droits sur les propos et les articles restent ceux de leurs ayants droit.</p><p><a href="mailto:thomas@codethelaw.eu">Contacter Thomas ↗</a> · <a href="https://github.com/tsua0002/riposte-apercu" target="_blank" rel="noopener noreferrer">Inspecter le code ↗</a></p><p class="note">Site statique avec un petit module JavaScript pour cette démonstration. Le lecteur YouTube et ses scripts ne sont chargés qu’après activation volontaire. Aucun formulaire d’envoi, téléchargement automatique ni outil d’analyse d’audience ajouté par ce projet. L’hébergeur peut conserver des journaux techniques ; les services externes ont leurs propres politiques. Cela ne constitue pas une certification de sécurité.</p></section>
-</main><footer><p>Aperçu personnel non officiel. La transcription intégrale reste privée. La vidéo est lue uniquement via l’intégration officielle YouTube.</p></footer></body></html>'''
+</main><footer><p class="note">Aperçu personnel non officiel. La transcription intégrale reste privée. La vidéo est lue uniquement via l’intégration officielle YouTube.</p></footer></body></html>'''
 (ROOT / 'data').mkdir(exist_ok=True)
+hint_parser = NoteHints()
+hint_parser.feed(page)
+page = ''.join(hint_parser.output)
 (ROOT / 'index.html').write_text(page)
 (ROOT / 'data/sources.json').write_text(json.dumps(public, ensure_ascii=False, indent=2))
 (ROOT / 'data/version-transcription.json').write_text(json.dumps(metadata, ensure_ascii=False, indent=2))

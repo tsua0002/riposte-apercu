@@ -33,7 +33,9 @@ class Tests(unittest.TestCase):
         for tag in ['iframe','video','audio','form','object','embed']:
             self.assertNotIn(tag,self.p.tags)
         self.assertFalse(any(k.startswith('on') for k,v in self.p.attrs))
-        self.assertEqual(self.p.tags.count('script'),1)
+        self.assertEqual(self.p.tags.count('script'),2)
+        self.assertTrue(any(k=='src' and urlsplit(v).path=='assets/hints.mjs' for k,v in self.p.attrs))
+        self.assertGreater(sum(v=='info-tooltip' for k,v in self.p.attrs if k=='class'),250)
         self.assertTrue(any(k=='src' and urlsplit(v).path=='assets/youtube-demo.mjs' for k,v in self.p.attrs))
         self.assertIn("default-src 'none'",self.html)
         self.assertIn("frame-src https://www.youtube-nocookie.com",self.html)
