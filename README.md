@@ -32,7 +32,7 @@ python3 -m http.server 8000 --bind 127.0.0.1
 
 Aucune dépendance à installer. Le générateur ne copie jamais les fichiers intégraux dans ce dépôt.
 
-Les notes et mentions auparavant affichées en gris sont regroupées derrière de petites icônes d’avertissement : survol à la souris, focus au clavier ou toucher/clic pour les ouvrir. Un second clic, Échap ou un clic extérieur ferme l’infobulle. Les textes et liens sont conservés ; sans JavaScript, ils restent affichés normalement.
+Cinq explications générales sont regroupées derrière de petites icônes d’avertissement. Les métadonnées des articles restent lisibles, les notes détaillées sont dans des volets « Notes de recherche » et le hash reste visible. Pour les icônes : survol à la souris, focus au clavier ou toucher/clic pour les ouvrir. Un second clic, Échap ou un clic extérieur ferme l’infobulle. Les textes et liens sont conservés ; sans JavaScript, ils restent affichés normalement.
 
 Les sources sont proposées pour documenter les sujets ; ce ne sont pas les sources officiellement déclarées par l’équipe. Le travail intégral reste en cours de relecture. Aucun article intégral n’est reproduit.
 
